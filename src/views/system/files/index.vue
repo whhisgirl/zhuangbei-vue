@@ -141,6 +141,8 @@ export default {
         type: null,
         uploadTime: null
       },
+      //查询type
+    
       upload: {
         // 是否禁用上传
         isUploading: false,
@@ -160,9 +162,36 @@ export default {
     };
   },
   created() {
-    this.getList();
+    // this.getList();
+    // this.getData();
+  },
+  activated(){
+    this.getData();
+  },
+  watch:{
+    'message'(newVal,oldVal){
+      this.getData();
+    }
   },
   methods: {
+    // 根据类型不同显示不同的数据
+    getData(){
+    this.loading = true;
+    var a=this.$route.query.type;
+    console.log(a);
+    var queryType ={};
+    queryType.fileName=""
+    queryType.uploadFilesName=""
+    queryType.uploadTime=""
+    queryType.type=a
+    
+    listFiles(queryType).then(response=>{
+      this.filesList = response.rows;
+        // console.log(response.rows);
+        this.total = response.total;
+        this.loading = false;
+    }); 
+    },
     /** 查询上传文件列表 */
     getList() {
       this.loading = true;
