@@ -70,9 +70,9 @@
           <el-upload
             class="uploader"
             ref="uploadDirection"
-            :file-list="fileList"
             :action="upload.url"
             :auto-upload="true"
+            :show-file-list="false"
             :headers="upload.headers"
             accept=".pdf, .doc, .docx, .zip, .rar, .xls, .xlsx, .ppt"
             :before-upload="(file)=>{return handlebeforeDirectionUpload(file,scope.row)}"
@@ -86,7 +86,14 @@
           </el-upload>
         </template>
       </el-table-column>
-      <el-table-column label="下载" align="center" prop="download" />
+      <el-table-column label="下载" align="center" prop="uploadFilesName">
+        <template slot-scope="scope">
+          <el-link
+            @click="downloadFile(scope.row)"
+            type="primary"
+          >{{ scope.row.uploadFilesName}}</el-link>
+        </template>
+      </el-table-column>
     </el-table>
 
     <pagination
@@ -129,7 +136,10 @@ export default {
       queryParams: {
         pageNum: 1,
         pageSize: 10,
-        fileName: null
+        fileName: null,
+        uploadFilesName: null,
+        type: null,
+        uploadTime: null
       },
       upload: {
         // 是否禁用上传
@@ -139,8 +149,7 @@ export default {
         // 上传的地址
         url: process.env.VUE_APP_BASE_API + "/common/upload",
       },
-      fileList:[],
-      uploadFileList:[],
+      // uploadFileList:[],
       beforeList:[],
       afferentList:null,
       // 表单参数
@@ -220,17 +229,17 @@ export default {
         ...this.queryParams
       }, `files_${new Date().getTime()}.xlsx`)
     },
-    returnData(){
-      this.$emit('returnData',this.uploadFileList)
-    },
+    // returnData(){
+    //   this.$emit('returnData',this.uploadFileList)
+    // },
     //时间戳格式化为yyyy/MM/dd
     formatDate2(d) {
       var date = new Date(d);
-      var YY = date.getFullYear() + "/";
+      var YY = date.getFullYear() + "-";
       var MM =
         (date.getMonth() + 1 < 10
           ? "0" + (date.getMonth() + 1)
-          : date.getMonth() + 1) + "/";
+          : date.getMonth() + 1) + "-";
       var DD = date.getDate() < 10 ? "0" + date.getDate() : date.getDate();
       return YY + MM + DD;
     },
@@ -238,21 +247,22 @@ export default {
       console.log("handlePdfFileUploadSuccess",row)
       if (response.code == 200) {
         console.log("response",response)
+        console.log("file:",file)
         let date= new Date();
         let time = this.formatDate2(date);
         var newFile ={};
         newFile.id = row.id;
         newFile.fileName = "";
-        newFile.fileName = row.type;
-        newFile.uploadFileName = response.originalFilename;
+        newFile.type = row.type;
+        newFile.uploadFilesName = response.newFileName;
+        newFile.uploadTime = time
         console.log("newFile",newFile)
         updateFiles(newFile).then(response => {
           console.log(11111,response)
-          this.$modal.msgSuccess("修改成功");
+          this.$modal.msgSuccess("上传成功");
           this.getList();
         });
-        // this.uploadFileList.push(pdfFile);
-        // this.returnData();
+
       } else {
         this.$message.error(file.name + "上传失败!");
       }
@@ -277,13 +287,14 @@ export default {
         return false;
       }
     },
-    closePreviewClick() {
-      this.showPdf = false;
-    },
-    downloadFile(file){
-      let fileUrl =file.url;
-      // window.location.href = fileUrl
-      console.log("file路径",file)
+
+    downloadFile(row){
+      // console.log(123,process.env.VUE_APP_BASE_API)
+      let temp = row.uploadTime.split("-");
+      let dateTime = temp[0]+"/"+temp[1]+"/"+temp[2]
+      let fileUrl =process.env.VUE_APP_BASE_API+"/profile/upload/"+dateTime+"/"+row.uploadFilesName;
+      window.location.href = fileUrl
+      // console.log("file路径",fileUrl)
     },
 
   }
