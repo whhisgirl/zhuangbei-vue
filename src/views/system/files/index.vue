@@ -75,13 +75,14 @@
             :auto-upload="true"
             :headers="upload.headers"
             accept=".pdf, .doc, .docx, .zip, .rar, .xls, .xlsx, .ppt"
-            :before-upload="handlebeforeDirectionUpload"
-            :on-success="handlePdfFileUploadSuccess">
+            :before-upload="(file)=>{return handlebeforeDirectionUpload(file,scope.row)}"
+            :on-success="(response, file)=>{return handlePdfFileUploadSuccess(response, file,scope.row)}">
             <el-button size="small" type="primary"
             >点击上传</el-button>
             <!-- <div slot="tip" class="el-upload__tip" style="width:100%">
               只能上传.pdf,.doc,.docx,.zip,.rar,.xls,.xlsx,.ppt文件
             </div> -->
+            <template></template>
           </el-upload>
         </template>
       </el-table-column>
@@ -233,24 +234,31 @@ export default {
       var DD = date.getDate() < 10 ? "0" + date.getDate() : date.getDate();
       return YY + MM + DD;
     },
-    handlePdfFileUploadSuccess(response, file) {
+    handlePdfFileUploadSuccess(response, file, row) {
+      console.log("handlePdfFileUploadSuccess",row)
       if (response.code == 200) {
+        console.log("response",response)
         let date= new Date();
         let time = this.formatDate2(date);
         var newFile ={};
-        newFile.uploadFilesName = response.newFileName;
-        updateFiles(this.form).then(response => {
-          this.$modal.msgSuccess("新增成功");
-          this.open = false;
+        newFile.id = row.id;
+        newFile.fileName = "";
+        newFile.fileName = row.type;
+        newFile.uploadFileName = response.originalFilename;
+        console.log("newFile",newFile)
+        updateFiles(newFile).then(response => {
+          console.log(11111,response)
+          this.$modal.msgSuccess("修改成功");
           this.getList();
         });
-        this.uploadFileList.push(pdfFile);
-        this.returnData();
+        // this.uploadFileList.push(pdfFile);
+        // this.returnData();
       } else {
         this.$message.error(file.name + "上传失败!");
       }
     },
-    handlebeforeDirectionUpload(file) {
+    handlebeforeDirectionUpload(file, row) {
+      console.log(row)
       let fileName=file.name;
       let pos = fileName.lastIndexOf(".");
       let lastName = fileName.substring(pos, fileName.length);
